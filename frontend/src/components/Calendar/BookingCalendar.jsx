@@ -140,12 +140,11 @@ export default function BookingCalendar({ rooms }) {
           }}
           headerToolbar={{
             left: 'newBooking prev,next today',
-            center: 'title',
+            center: '',
             right: 'timeGridDay,timeGridWeek,dayGridMonth'
           }}
           views={{
-            timeGridDay:  { headerToolbar: { left: 'newBooking prev,next today', center: '', right: 'timeGridDay,timeGridWeek,dayGridMonth' } },
-            timeGridWeek: { headerToolbar: { left: 'newBooking prev,next today', center: '', right: 'timeGridDay,timeGridWeek,dayGridMonth' } }
+            dayGridMonth: { headerToolbar: { left: 'newBooking prev,next today', center: 'title', right: 'timeGridDay,timeGridWeek,dayGridMonth' } }
           }}
           buttonText={{
             day: 'Day',
