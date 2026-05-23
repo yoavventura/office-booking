@@ -24,43 +24,44 @@ export default function BookingCalendar({ rooms }) {
     setSelectedRooms(new Set(rooms.map(r => r.id)));
   }, [rooms]);
 
-  // Fetch and refresh the next upcoming booking every 5 minutes
-  useEffect(() => {
-    async function fetchNext() {
-      try {
-        const now = new Date();
-        const weekAhead = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        const res = await api.get('/bookings', {
-          params: { start: now.toISOString(), end: weekAhead.toISOString() }
-        });
-        const upcoming = res.data
-          .filter(b => new Date(b.start_time) > now)
-          .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+  const fetchNextEvent = useCallback(async () => {
+    try {
+      const now = new Date();
+      const weekAhead = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const res = await api.get('/bookings', {
+        params: { start: now.toISOString(), end: weekAhead.toISOString() }
+      });
 
-        let text;
-        if (upcoming.length === 0) {
-          text = 'All clear — nothing scheduled';
-        } else {
-          const next = upcoming[0];
-          const start = new Date(next.start_time);
-          const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
-          const isToday    = start.toDateString() === now.toDateString();
-          const isTomorrow = start.toDateString() === tomorrow.toDateString();
-          const dayStr = isToday ? 'Today' : isTomorrow ? 'Tomorrow'
-            : start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-          const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-          text = `Next: ${next.title}  ·  ${next.room_name}  ·  ${dayStr} ${timeStr}`;
-        }
+      const upcoming = res.data
+        .filter(b => new Date(b.start_time) > now)
+        .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
 
-        setNextEventText(text);
-      } catch {
-        setNextEventText('');
+      if (upcoming.length === 0) {
+        setNextEventText('All clear — nothing scheduled');
+        return;
       }
+
+      const next = upcoming[0];
+      const start = new Date(next.start_time);
+      const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+      const isToday    = start.toDateString() === now.toDateString();
+      const isTomorrow = start.toDateString() === tomorrow.toDateString();
+      const dayStr = isToday ? 'Today' : isTomorrow ? 'Tomorrow'
+        : start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+      setNextEventText(`Next: ${next.title}  ·  ${next.room_name}  ·  ${dayStr} ${timeStr}`);
+    } catch {
+      setNextEventText('');
     }
-    fetchNext();
-    const interval = setInterval(fetchNext, 5 * 60 * 1000);
-    return () => clearInterval(interval);
   }, []);
+
+  // Run on mount and every 5 minutes
+  useEffect(() => {
+    fetchNextEvent();
+    const interval = setInterval(fetchNextEvent, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchNextEvent]);
 
   const fetchEvents = useCallback(async (info, successCb, failureCb) => {
     try {
@@ -110,7 +111,7 @@ export default function BookingCalendar({ rooms }) {
     setModal(null);
     calendarRef.current?.getApi().refetchEvents();
     refreshNotifications();
-    setNextEventText('');
+    fetchNextEvent();
   }
 
   function toggleRoom(roomId) {
