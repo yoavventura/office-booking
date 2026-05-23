@@ -344,29 +344,9 @@ function OutlookSection() {
 
   return (
     <div style={{ maxWidth: '600px' }}>
-      <div className="card" style={{ padding: '20px', marginBottom: '20px', background: '#f0f7ff', border: '1px solid #bfdbfe' }}>
-        <div style={{ fontWeight: '600', marginBottom: '8px', color: 'var(--gray-800)' }}>One-Way Outlook Sync</div>
-        <p style={{ fontSize: '13px', color: 'var(--gray-600)', lineHeight: 1.6 }}>
-          When enabled, every booking created here is automatically pushed to the organiser's Outlook calendar.
-          Edits and cancellations sync too. Everything is still managed from this system.
-        </p>
-        <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--gray-500)' }}>
-          <strong>Requires:</strong> Microsoft 365 · Azure App Registration · <code>Calendars.ReadWrite</code> application permission
-        </div>
-      </div>
 
+      {/* Connection Settings + Azure setup attached below */}
       <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
-        <div style={{ fontWeight: '600', marginBottom: '12px', fontSize: '14px' }}>Azure Setup (one time, ~10 minutes)</div>
-        <ol style={{ fontSize: '13px', color: 'var(--gray-600)', lineHeight: 2.2, paddingLeft: '18px' }}>
-          <li>Go to <strong>portal.azure.com</strong> → Azure Active Directory → App registrations → New registration</li>
-          <li>Name it anything (e.g. <em>Office Booking</em>), click Register</li>
-          <li>Copy the <strong>Application (client) ID</strong> and <strong>Directory (tenant) ID</strong></li>
-          <li>Go to <strong>Certificates &amp; secrets</strong> → New client secret → Copy the value immediately</li>
-          <li>Go to <strong>API permissions</strong> → Add → Microsoft Graph → Application permissions → <code>Calendars.ReadWrite</code> → Grant admin consent</li>
-        </ol>
-      </div>
-
-      <div className="card" style={{ padding: '20px' }}>
         <div style={{ fontWeight: '600', marginBottom: '16px' }}>Connection Settings</div>
 
         {error   && <div className="alert alert-danger"  style={{ marginBottom: '12px' }}>{error}</div>}
@@ -412,7 +392,28 @@ function OutlookSection() {
             </button>
           </div>
         </form>
+
+        {/* Azure setup — attached to the bottom of the settings card */}
+        <div style={{ marginTop: '20px', borderTop: '1px solid var(--gray-100)', paddingTop: '16px' }}>
+          <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--gray-700)', marginBottom: '10px' }}>
+            Where do I get these values? (Azure setup, ~10 min)
+          </div>
+          <ol style={{ fontSize: '12px', color: 'var(--gray-500)', lineHeight: 2, paddingLeft: '16px', margin: 0 }}>
+            <li>Go to <strong style={{ color: 'var(--gray-700)' }}>portal.azure.com</strong> → Azure Active Directory → App registrations → New registration</li>
+            <li>Name it anything (e.g. <em>Office Booking</em>), click Register</li>
+            <li>Copy the <strong style={{ color: 'var(--gray-700)' }}>Application (client) ID</strong> and <strong style={{ color: 'var(--gray-700)' }}>Directory (tenant) ID</strong></li>
+            <li>Go to <strong style={{ color: 'var(--gray-700)' }}>Certificates &amp; secrets</strong> → New client secret → Copy the value immediately</li>
+            <li>Go to <strong style={{ color: 'var(--gray-700)' }}>API permissions</strong> → Add → Microsoft Graph → Application permissions → <code>Calendars.ReadWrite</code> → Grant admin consent</li>
+          </ol>
+        </div>
       </div>
+
+      {/* Simple info paragraph at the bottom */}
+      <p style={{ fontSize: '12px', color: 'var(--gray-400)', lineHeight: 1.7 }}>
+        This integration pushes bookings one way — from this system into Outlook. Edits and cancellations sync automatically.
+        Outlook is read-only; all changes must be made here. Requires Microsoft 365 with <code>Calendars.ReadWrite</code> application permission granted in Azure.
+      </p>
+
     </div>
   );
 }
