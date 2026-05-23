@@ -11,6 +11,7 @@ const bookingRoutes = require('./src/routes/bookings');
 const notificationRoutes = require('./src/routes/notifications');
 const userRoutes = require('./src/routes/users');
 const salesforceRoutes = require('./src/routes/salesforce');
+const settingsRoutes = require('./src/routes/settings');
 const { initializeDatabase } = require('./src/database/db');
 const { startNotificationJobs } = require('./src/services/notificationService');
 
@@ -43,6 +44,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/salesforce', salesforceRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 

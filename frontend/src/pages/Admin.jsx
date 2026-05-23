@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const ROOM_COLORS = ['#2563eb', '#16a34a', '#9333ea', '#d97706', '#dc2626', '#0891b2', '#db2777', '#65a30d'];
 const ROLES = ['staff', 'manager', 'secretary', 'admin'];
@@ -7,36 +8,44 @@ const ROLES = ['staff', 'manager', 'secretary', 'admin'];
 export default function Admin() {
   const [tab, setTab] = useState('rooms');
 
+  const tabs = [
+    { key: 'rooms',   label: '🏠 Rooms' },
+    { key: 'users',   label: '👥 Users' },
+    { key: 'outlook', label: '📧 Outlook' }
+  ];
+
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--gray-900)' }}>Room Management</h1>
-        <p style={{ color: 'var(--gray-500)', fontSize: '13px', marginTop: '2px' }}>Manage rooms and users</p>
+        <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--gray-900)' }}>Administration</h1>
+        <p style={{ color: 'var(--gray-500)', fontSize: '13px', marginTop: '2px' }}>Manage rooms, users, and integrations</p>
       </div>
 
       <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', background: 'var(--gray-100)', padding: '4px', borderRadius: '8px', width: 'fit-content' }}>
-        {['rooms', 'users'].map(t => (
+        {tabs.map(t => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={t.key}
+            onClick={() => setTab(t.key)}
             style={{
               padding: '7px 18px',
               borderRadius: '6px',
               border: 'none',
               fontWeight: '500',
               fontSize: '13px',
-              background: tab === t ? 'white' : 'transparent',
-              color: tab === t ? 'var(--gray-800)' : 'var(--gray-500)',
-              boxShadow: tab === t ? 'var(--shadow)' : 'none',
+              background: tab === t.key ? 'white' : 'transparent',
+              color: tab === t.key ? 'var(--gray-800)' : 'var(--gray-500)',
+              boxShadow: tab === t.key ? 'var(--shadow)' : 'none',
               transition: 'all 0.15s'
             }}
           >
-            {t === 'rooms' ? '🏠 Rooms' : '👥 Users'}
+            {t.label}
           </button>
         ))}
       </div>
 
-      {tab === 'rooms' ? <RoomsTab /> : <UsersTab />}
+      {tab === 'rooms'   && <RoomsTab />}
+      {tab === 'users'   && <UsersTab />}
+      {tab === 'outlook' && <OutlookTab />}
     </div>
   );
 }
@@ -176,6 +185,137 @@ function RoomsTab() {
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function OutlookTab() {
+  const [form, setForm] = useState({ enabled: false, tenantId: '', clientId: '', clientSecret: '' });
+  const [hasSecret, setHasSecret] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [testResult, setTestResult] = useState('');
+
+  useEffect(() => {
+    api.get('/settings/outlook').then(res => {
+      setForm({ enabled: res.data.enabled, tenantId: res.data.tenantId, clientId: res.data.clientId, clientSecret: '' });
+      setHasSecret(res.data.hasSecret);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setError(''); setSuccess('');
+    setSaving(true);
+    try {
+      await api.post('/settings/outlook', form);
+      setSuccess('Settings saved successfully.');
+      if (form.clientSecret) setHasSecret(true);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save settings');
+    } finally { setSaving(false); }
+  }
+
+  async function handleTest() {
+    setTestResult(''); setError('');
+    setTesting(true);
+    try {
+      const res = await api.post('/settings/outlook/test', form);
+      setTestResult(res.data.message);
+    } catch (err) {
+      setTestResult('✗ ' + (err.response?.data?.error || 'Connection failed'));
+    } finally { setTesting(false); }
+  }
+
+  if (loading) return <div style={{ color: 'var(--gray-400)', padding: '32px' }}>Loading...</div>;
+
+  return (
+    <div style={{ maxWidth: '600px' }}>
+      {/* Info card */}
+      <div className="card" style={{ padding: '20px', marginBottom: '20px', background: '#f0f7ff', border: '1px solid #bfdbfe' }}>
+        <div style={{ fontWeight: '600', marginBottom: '8px', color: 'var(--gray-800)' }}>📧 One-Way Outlook Sync</div>
+        <p style={{ fontSize: '13px', color: 'var(--gray-600)', lineHeight: 1.6 }}>
+          When enabled, every booking created in this system is automatically pushed to the organiser's Outlook calendar.
+          Edits and cancellations sync too. Bookings are always managed from here — Outlook just reflects them.
+        </p>
+        <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--gray-500)' }}>
+          <strong>Requires:</strong> Microsoft 365 · Azure App Registration · <code>Calendars.ReadWrite</code> application permission
+        </div>
+      </div>
+
+      {/* Setup steps */}
+      <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
+        <div style={{ fontWeight: '600', marginBottom: '12px', fontSize: '14px' }}>Azure Setup (one time)</div>
+        <ol style={{ fontSize: '13px', color: 'var(--gray-600)', lineHeight: 2, paddingLeft: '18px' }}>
+          <li>Go to <strong>portal.azure.com</strong> → Azure Active Directory → App registrations → New registration</li>
+          <li>Name it anything (e.g. <em>Office Booking</em>), click Register</li>
+          <li>Copy the <strong>Application (client) ID</strong> and <strong>Directory (tenant) ID</strong></li>
+          <li>Go to <strong>Certificates &amp; secrets</strong> → New client secret → Copy the value immediately</li>
+          <li>Go to <strong>API permissions</strong> → Add → Microsoft Graph → Application permissions → <code>Calendars.ReadWrite</code> → Grant admin consent</li>
+        </ol>
+      </div>
+
+      {/* Settings form */}
+      <div className="card" style={{ padding: '20px' }}>
+        <div style={{ fontWeight: '600', marginBottom: '16px' }}>Connection Settings</div>
+
+        {error   && <div className="alert alert-danger"  style={{ marginBottom: '12px' }}>{error}</div>}
+        {success && <div className="alert alert-success" style={{ marginBottom: '12px' }}>{success}</div>}
+
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {/* Enable toggle */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', padding: '12px 16px', borderRadius: 'var(--radius)', background: form.enabled ? 'var(--primary-light)' : 'var(--gray-50)', border: `1px solid ${form.enabled ? 'var(--primary)' : 'var(--gray-200)'}`, transition: 'all 0.15s' }}>
+            <input type="checkbox" checked={form.enabled} onChange={e => setForm(p => ({ ...p, enabled: e.target.checked }))} style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }} />
+            <div>
+              <div style={{ fontWeight: '600', fontSize: '13px' }}>Enable Outlook Sync</div>
+              <div style={{ fontSize: '12px', color: 'var(--gray-500)' }}>New bookings will appear in Outlook automatically</div>
+            </div>
+          </label>
+
+          <div className="form-group">
+            <label className="form-label">Tenant ID (Directory ID)</label>
+            <input className="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={form.tenantId} onChange={e => setForm(p => ({ ...p, tenantId: e.target.value }))} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Client ID (Application ID)</label>
+            <input className="form-input" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={form.clientId} onChange={e => setForm(p => ({ ...p, clientId: e.target.value }))} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              Client Secret
+              {hasSecret && <span style={{ fontWeight: '400', color: 'var(--success)', marginLeft: '8px' }}>✓ saved</span>}
+            </label>
+            <input
+              type="password"
+              className="form-input"
+              placeholder={hasSecret ? 'Leave blank to keep existing secret' : 'Paste secret value here'}
+              value={form.clientSecret}
+              onChange={e => setForm(p => ({ ...p, clientSecret: e.target.value }))}
+            />
+          </div>
+
+          {/* Test result */}
+          {testResult && (
+            <div className={`alert ${testResult.startsWith('✗') ? 'alert-danger' : 'alert-success'}`}>
+              {testResult}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--gray-100)', paddingTop: '14px' }}>
+            <button type="button" className="btn btn-secondary" onClick={handleTest} disabled={testing}>
+              {testing ? 'Testing…' : '🔌 Test Connection'}
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Saving…' : 'Save Settings'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

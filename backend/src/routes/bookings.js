@@ -4,6 +4,7 @@ const { getDb } = require('../database/db');
 const { authenticate, hasRole } = require('../middleware/auth');
 const { createNotification, notifyRoleAndAbove } = require('../services/notificationService');
 const { syncBookingToSalesforce, cancelSalesforceEvent } = require('../services/salesforceService');
+const { createOutlookEvent, updateOutlookEvent, deleteOutlookEvent } = require('../services/outlookService');
 
 const router = express.Router();
 router.use(authenticate);
@@ -220,6 +221,14 @@ router.post('/', (req, res) => {
 
   syncBookingToSalesforce(booking).catch(() => {});
 
+  // Push to Outlook calendar (fire-and-forget — don't block the response)
+  createOutlookEvent(booking, req.user.email).then(outlookId => {
+    if (outlookId) {
+      getDb().prepare('UPDATE bookings SET outlook_event_id = ? WHERE id = ?')
+        .run(outlookId, result.lastInsertRowid);
+    }
+  }).catch(() => {});
+
   res.status(201).json(booking);
 });
 
@@ -286,6 +295,11 @@ router.put('/:id', (req, res) => {
 
   syncBookingToSalesforce(updated).catch(() => {});
 
+  // Update Outlook event if one exists
+  if (booking.outlook_event_id) {
+    updateOutlookEvent(booking.outlook_event_id, updated, req.user.email).catch(() => {});
+  }
+
   res.json(updated);
 });
 
@@ -320,6 +334,13 @@ router.delete('/:id', (req, res) => {
   }
 
   cancelSalesforceEvent(booking).catch(() => {});
+
+  // Remove from Outlook calendar
+  if (booking.outlook_event_id) {
+    // Need the organiser's email — fetch it
+    const organiser = getDb().prepare('SELECT email FROM users WHERE id = ?').get(booking.user_id);
+    if (organiser) deleteOutlookEvent(booking.outlook_event_id, organiser.email).catch(() => {});
+  }
 
   res.json({ message: 'Booking cancelled' });
 });
