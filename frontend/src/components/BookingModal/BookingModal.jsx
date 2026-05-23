@@ -66,6 +66,7 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   function set(field, value) { setForm(prev => ({ ...prev, [field]: value })); }
 
@@ -109,11 +110,11 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
   }
 
   async function handleCancel() {
-    if (!confirm('Cancel this booking? This cannot be undone.')) return;
     try {
       await api.delete(`/bookings/${initialData.id}`);
       onSaved();
     } catch (err) {
+      setConfirmCancel(false);
       setError(err.response?.data?.error || 'Failed to cancel booking');
     }
   }
@@ -287,10 +288,32 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
             )}
           </div>
 
+          {/* Inline cancel confirmation — replaces browser confirm() */}
+          {confirmCancel && (
+            <div style={{
+              margin: '0 24px 0', padding: '14px 16px',
+              background: 'var(--danger-light)', borderRadius: 'var(--radius)',
+              border: '1px solid #fca5a5', display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', gap: '12px'
+            }}>
+              <span style={{ fontSize: '13px', color: '#991b1b', fontWeight: '500' }}>
+                Remove this booking permanently?
+              </span>
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirmCancel(false)}>
+                  Keep it
+                </button>
+                <button type="button" className="btn btn-danger btn-sm" onClick={handleCancel}>
+                  Yes, remove
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
             <div>
-              {isEdit && canEdit && (
-                <button type="button" className="btn btn-danger btn-sm" onClick={handleCancel}>
+              {isEdit && canEdit && !confirmCancel && (
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirmCancel(true)}>
                   Cancel Booking
                 </button>
               )}
