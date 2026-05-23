@@ -18,7 +18,7 @@ export default function BookingCalendar({ rooms }) {
   const [selectedRooms, setSelectedRooms] = useState(new Set(rooms.map(r => r.id)));
   const [roomFilter, setRoomFilter] = useState('all');
   const [loading, setLoading] = useState(false);
-  const [nextEventText, setNextEventText] = useState('...');
+  const [nextEventText, setNextEventText] = useState('');
 
   useEffect(() => {
     setSelectedRooms(new Set(rooms.map(r => r.id)));
@@ -53,9 +53,6 @@ export default function BookingCalendar({ rooms }) {
         }
 
         setNextEventText(text);
-        // FullCalendar doesn't re-render custom button text on prop change — update DOM directly
-        const btn = document.querySelector('.fc-upcomingEvent-button');
-        if (btn) btn.textContent = text;
       } catch {
         setNextEventText('');
       }
@@ -113,10 +110,7 @@ export default function BookingCalendar({ rooms }) {
     setModal(null);
     calendarRef.current?.getApi().refetchEvents();
     refreshNotifications();
-    // Trigger a re-fetch of the next event
-    setNextEventText('...');
-    const btn = document.querySelector('.fc-upcomingEvent-button');
-    if (btn) btn.textContent = '...';
+    setNextEventText('');
   }
 
   function toggleRoom(roomId) {
