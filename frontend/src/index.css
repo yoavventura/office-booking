@@ -219,36 +219,81 @@ a { text-decoration: none; color: inherit; }
 .table tr:last-child td { border-bottom: none; }
 .table tr:hover td { background: var(--gray-50); }
 
-/* FullCalendar overrides */
-.fc .fc-toolbar-title { font-size: 18px !important; font-weight: 600 !important; }
+/* FullCalendar — Google Calendar-inspired styling */
+.fc .fc-toolbar-title {
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  color: #3c4043 !important;
+  letter-spacing: -0.2px !important;
+}
 .fc .fc-button {
   background: white !important;
-  color: var(--gray-700) !important;
-  border: 1px solid var(--gray-200) !important;
+  color: #3c4043 !important;
+  border: 1px solid #dadce0 !important;
   box-shadow: none !important;
   font-size: 13px !important;
   font-weight: 500 !important;
+  border-radius: 4px !important;
+  padding: 6px 14px !important;
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
-.fc .fc-button:hover { background: var(--gray-50) !important; border-color: var(--gray-300) !important; }
+.fc .fc-button:hover { background: #f6f8ff !important; border-color: #c5c7ca !important; }
 .fc .fc-button:active { transform: scale(0.97) !important; }
-.fc .fc-button-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
-.fc .fc-button-primary:not(:disabled).fc-button-active { background: var(--primary) !important; border-color: var(--primary) !important; }
-.fc .fc-today-button { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
-.fc-timegrid-slot { height: 40px !important; }
-.fc-event { cursor: pointer !important; border-radius: 4px !important; font-size: 12px !important; transition: opacity 0.15s ease, filter 0.15s ease !important; }
-.fc-event:hover { opacity: 0.92 !important; filter: brightness(1.05) !important; }
-.fc-daygrid-event { border-radius: 4px !important; }
-.fc .fc-col-header-cell-cushion { padding: 4px 0 !important; }
-.fc .fc-timegrid-slot-label { font-size: 12px; color: var(--gray-400); }
+.fc .fc-button-active { background: #e8f0fe !important; color: #1a73e8 !important; border-color: #c5c7ca !important; }
+.fc .fc-button-primary:not(:disabled).fc-button-active { background: #e8f0fe !important; color: #1a73e8 !important; border-color: #c5c7ca !important; }
+.fc .fc-today-button {
+  background: white !important; color: #1a73e8 !important;
+  border: 1px solid #dadce0 !important;
+  font-weight: 500 !important;
+}
+.fc .fc-today-button:hover { background: #f6f8ff !important; }
 
-/* Fix: subtler time-slot selection highlight (fix 7) */
-.fc .fc-highlight {
-  background: rgba(37, 99, 235, 0.1) !important;
-  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+/* Grid lines — subtle like Google Calendar */
+.fc-theme-standard td, .fc-theme-standard th { border-color: #e0e0e0 !important; }
+.fc-theme-standard .fc-scrollgrid { border-color: #e0e0e0 !important; }
+.fc .fc-timegrid-slot { height: 44px !important; border-bottom: none !important; }
+.fc .fc-timegrid-slot-minor { border-top-style: dotted !important; border-color: #f1f3f4 !important; }
+
+/* Time labels */
+.fc .fc-timegrid-slot-label {
+  font-size: 10px !important;
+  color: #70757a !important;
+  font-weight: 400 !important;
+  text-transform: uppercase !important;
+  vertical-align: top !important;
+  padding-top: 2px !important;
+  letter-spacing: 0.3px !important;
 }
 
-/* Fix: calendar fills its container and scrolls internally (fix 2) */
+/* Column headers */
+.fc .fc-col-header-cell { border-bottom: 1px solid #e0e0e0 !important; background: white !important; }
+.fc .fc-col-header-cell-cushion { padding: 0 !important; text-decoration: none !important; }
+.fc .fc-col-header-cell-cushion:hover { text-decoration: none !important; }
+
+/* Today column — very subtle blue tint */
+.fc .fc-day-today { background: #f8fbff !important; }
+.fc .fc-day-today .fc-daygrid-day-number { color: #1a73e8 !important; }
+
+/* Events */
+.fc-event { cursor: pointer !important; border-radius: 4px !important; font-size: 12px !important; transition: filter 0.12s ease, box-shadow 0.12s ease !important; border-width: 0 !important; padding: 1px 4px !important; }
+.fc-event:hover { filter: brightness(0.94) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important; }
+.fc-daygrid-event { border-radius: 4px !important; padding: 2px 6px !important; }
+
+/* Business hours — almost invisible like Google Calendar */
+.fc .fc-non-business { background: rgba(248,249,250,0.6) !important; }
+
+/* Time-slot selection highlight — subtle */
+.fc .fc-highlight {
+  background: rgba(26, 115, 232, 0.08) !important;
+  border: 1px solid rgba(26, 115, 232, 0.3) !important;
+  border-radius: 4px !important;
+}
+
+/* Now indicator — red line + dot like Google */
+.fc .fc-timegrid-now-indicator-line { border-color: #ea4335 !important; border-width: 2px !important; }
+.fc .fc-timegrid-now-indicator-arrow { border-top-color: #ea4335 !important; border-bottom-color: #ea4335 !important; }
+
+/* Calendar fills container and scrolls internally */
 .fc { height: 100% !important; }
 .fc .fc-view-harness { overflow-y: auto !important; }
 .fc-scroller { overflow-y: auto !important; }

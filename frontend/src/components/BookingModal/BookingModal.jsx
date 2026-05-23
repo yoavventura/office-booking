@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import api from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,48 +13,68 @@ const WEEKDAYS = [
   { label: 'Sat', value: 'SA' }
 ];
 
+function parseRRule(rruleStr) {
+  if (!rruleStr) return { frequency: 'none', weekdays: [], endType: 'never', endDate: '', occurrences: 10 };
+  const raw = rruleStr.startsWith('RRULE:') ? rruleStr.slice(6) : rruleStr;
+  const parts = {};
+  raw.split(';').forEach(p => { const [k, v] = p.split('='); if (k) parts[k] = v; });
+  const frequency = (parts.FREQ || 'none').toLowerCase();
+  const weekdays = parts.BYDAY ? parts.BYDAY.split(',') : [];
+  let endType = 'never', endDate = '', occurrences = 10;
+  if (parts.UNTIL) {
+    endType = 'on';
+    const u = parts.UNTIL.replace(/T.*/, '');
+    endDate = `${u.slice(0, 4)}-${u.slice(4, 6)}-${u.slice(6, 8)}`;
+  } else if (parts.COUNT) {
+    endType = 'after';
+    occurrences = parseInt(parts.COUNT);
+  }
+  return { frequency, weekdays, endType, endDate, occurrences };
+}
+
 function buildRRule(frequency, weekdays, endType, endDate, occurrences) {
   if (!frequency || frequency === 'none') return null;
   const parts = [`FREQ=${frequency.toUpperCase()}`];
-  if (frequency === 'weekly' && weekdays.length > 0) {
-    parts.push(`BYDAY=${weekdays.join(',')}`);
-  }
-  if (endType === 'on' && endDate) {
-    parts.push(`UNTIL=${endDate.replace(/-/g, '')}T235959Z`);
-  } else if (endType === 'after' && occurrences) {
-    parts.push(`COUNT=${occurrences}`);
-  }
+  if (frequency === 'weekly' && weekdays.length > 0) parts.push(`BYDAY=${weekdays.join(',')}`);
+  if (endType === 'on' && endDate) parts.push(`UNTIL=${endDate.replace(/-/g, '')}T235959Z`);
+  else if (endType === 'after' && occurrences) parts.push(`COUNT=${occurrences}`);
   return `RRULE:${parts.join(';')}`;
 }
 
 export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
   const { user, hasRole } = useAuth();
   const isEdit = !!initialData?.id;
+  const existingRRule = parseRRule(initialData?.recurrence_rule);
 
   const [form, setForm] = useState({
     roomId: initialData?.room_id || rooms[0]?.id || '',
     title: initialData?.title || '',
     description: initialData?.description || '',
-    startTime: initialData?.start_time ? format(new Date(initialData.start_time), "yyyy-MM-dd'T'HH:mm") : format(new Date(), "yyyy-MM-dd'T'HH:00"),
-    endTime: initialData?.end_time ? format(new Date(initialData.end_time), "yyyy-MM-dd'T'HH:mm") : format(new Date(Date.now() + 3600000), "yyyy-MM-dd'T'HH:00"),
-    frequency: 'none',
-    weekdays: [],
-    endType: 'never',
-    endDate: '',
-    occurrences: 10
+    startTime: initialData?.start_time
+      ? format(new Date(initialData.start_time), "yyyy-MM-dd'T'HH:mm")
+      : format(new Date(), "yyyy-MM-dd'T'HH:00"),
+    endTime: initialData?.end_time
+      ? format(new Date(initialData.end_time), "yyyy-MM-dd'T'HH:mm")
+      : format(new Date(Date.now() + 3600000), "yyyy-MM-dd'T'HH:00"),
+    frequency: existingRRule.frequency,
+    weekdays: existingRRule.weekdays,
+    endType: existingRRule.endType,
+    endDate: existingRRule.endDate,
+    occurrences: existingRRule.occurrences,
+    scope: 'all'   // 'all' | 'this' — only shown when editing a recurring booking
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  function set(field, value) {
-    setForm(prev => ({ ...prev, [field]: value }));
-  }
+  function set(field, value) { setForm(prev => ({ ...prev, [field]: value })); }
 
   function toggleWeekday(day) {
     setForm(prev => ({
       ...prev,
-      weekdays: prev.weekdays.includes(day) ? prev.weekdays.filter(d => d !== day) : [...prev.weekdays, day]
+      weekdays: prev.weekdays.includes(day)
+        ? prev.weekdays.filter(d => d !== day)
+        : [...prev.weekdays, day]
     }));
   }
 
@@ -71,15 +91,15 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
       startTime: new Date(form.startTime).toISOString(),
       endTime: new Date(form.endTime).toISOString(),
       recurrenceRule: rrule,
-      recurrenceEnd: form.endType === 'on' && form.endDate ? new Date(form.endDate + 'T23:59:59').toISOString() : null
+      recurrenceEnd: form.endType === 'on' && form.endDate
+        ? new Date(form.endDate + 'T23:59:59').toISOString()
+        : null,
+      scope: form.scope
     };
 
     try {
-      if (isEdit) {
-        await api.put(`/bookings/${initialData.id}`, payload);
-      } else {
-        await api.post('/bookings', payload);
-      }
+      if (isEdit) await api.put(`/bookings/${initialData.id}`, payload);
+      else await api.post('/bookings', payload);
       onSaved();
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || 'Failed to save booking');
@@ -101,6 +121,7 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
   const canEditOthers = hasRole('secretary');
   const isOwner = initialData?.user_id === user?.id;
   const canEdit = !isEdit || canEditOthers || isOwner;
+  const isRecurring = form.frequency !== 'none';
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -166,94 +187,103 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className="form-group">
                 <label className="form-label">Start *</label>
-                <input
-                  type="datetime-local"
-                  className="form-input"
-                  value={form.startTime}
-                  onChange={e => set('startTime', e.target.value)}
-                  required
-                  disabled={!canEdit}
-                />
+                <input type="datetime-local" className="form-input" value={form.startTime}
+                  onChange={e => set('startTime', e.target.value)} required disabled={!canEdit} />
               </div>
               <div className="form-group">
                 <label className="form-label">End *</label>
-                <input
-                  type="datetime-local"
-                  className="form-input"
-                  value={form.endTime}
-                  onChange={e => set('endTime', e.target.value)}
-                  required
-                  disabled={!canEdit}
-                />
+                <input type="datetime-local" className="form-input" value={form.endTime}
+                  onChange={e => set('endTime', e.target.value)} required disabled={!canEdit} />
               </div>
             </div>
 
-            {!isEdit && (
-              <>
-                <div style={{ borderTop: '1px solid var(--gray-100)', paddingTop: '16px' }}>
-                  <div className="form-group">
-                    <label className="form-label">Recurrence</label>
-                    <select className="form-input" value={form.frequency} onChange={e => set('frequency', e.target.value)}>
-                      <option value="none">Does not repeat</option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="yearly">Yearly</option>
-                    </select>
-                  </div>
-
-                  {form.frequency === 'weekly' && (
-                    <div className="form-group" style={{ marginTop: '10px' }}>
-                      <label className="form-label">Repeat on</label>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {WEEKDAYS.map(d => (
-                          <button
-                            key={d.value}
-                            type="button"
-                            onClick={() => toggleWeekday(d.value)}
-                            style={{
-                              padding: '5px 10px',
-                              borderRadius: '6px',
-                              border: '1px solid',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              background: form.weekdays.includes(d.value) ? 'var(--primary)' : 'white',
-                              color: form.weekdays.includes(d.value) ? 'white' : 'var(--gray-600)',
-                              borderColor: form.weekdays.includes(d.value) ? 'var(--primary)' : 'var(--gray-300)'
-                            }}
-                          >
-                            {d.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {form.frequency !== 'none' && (
-                    <div className="form-group" style={{ marginTop: '10px' }}>
-                      <label className="form-label">Ends</label>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {[
-                          { value: 'never', label: 'Never' },
-                          { value: 'on', label: 'On date' },
-                          { value: 'after', label: 'After occurrences' }
-                        ].map(opt => (
-                          <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                            <input type="radio" name="endType" value={opt.value} checked={form.endType === opt.value} onChange={e => set('endType', e.target.value)} />
-                            <span style={{ fontSize: '13px' }}>{opt.label}</span>
-                            {opt.value === 'on' && form.endType === 'on' && (
-                              <input type="date" className="form-input" style={{ width: 'auto', flex: 1 }} value={form.endDate} onChange={e => set('endDate', e.target.value)} min={form.startTime?.split('T')[0]} />
-                            )}
-                            {opt.value === 'after' && form.endType === 'after' && (
-                              <input type="number" className="form-input" style={{ width: '80px' }} value={form.occurrences} onChange={e => set('occurrences', e.target.value)} min={1} max={365} />
-                            )}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+            {/* Recurrence — shown for both new bookings and editing */}
+            {canEdit && (
+              <div style={{ borderTop: '1px solid var(--gray-100)', paddingTop: '16px' }}>
+                <div className="form-group">
+                  <label className="form-label">Recurrence</label>
+                  <select className="form-input" value={form.frequency} onChange={e => set('frequency', e.target.value)}>
+                    <option value="none">Does not repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
                 </div>
-              </>
+
+                {form.frequency === 'weekly' && (
+                  <div className="form-group" style={{ marginTop: '10px' }}>
+                    <label className="form-label">Repeat on</label>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {WEEKDAYS.map(d => (
+                        <button key={d.value} type="button" onClick={() => toggleWeekday(d.value)}
+                          style={{
+                            padding: '5px 10px', borderRadius: '6px', border: '1px solid',
+                            fontSize: '12px', fontWeight: '500',
+                            background: form.weekdays.includes(d.value) ? 'var(--primary)' : 'white',
+                            color: form.weekdays.includes(d.value) ? 'white' : 'var(--gray-600)',
+                            borderColor: form.weekdays.includes(d.value) ? 'var(--primary)' : 'var(--gray-300)'
+                          }}
+                        >{d.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {isRecurring && (
+                  <div className="form-group" style={{ marginTop: '10px' }}>
+                    <label className="form-label">Ends</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {[
+                        { value: 'never', label: 'Never' },
+                        { value: 'on', label: 'On date' },
+                        { value: 'after', label: 'After occurrences' }
+                      ].map(opt => (
+                        <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                          <input type="radio" name="endType" value={opt.value}
+                            checked={form.endType === opt.value} onChange={e => set('endType', e.target.value)} />
+                          <span style={{ fontSize: '13px' }}>{opt.label}</span>
+                          {opt.value === 'on' && form.endType === 'on' && (
+                            <input type="date" className="form-input" style={{ width: 'auto', flex: 1 }}
+                              value={form.endDate} onChange={e => set('endDate', e.target.value)}
+                              min={form.startTime?.split('T')[0]} />
+                          )}
+                          {opt.value === 'after' && form.endType === 'after' && (
+                            <input type="number" className="form-input" style={{ width: '80px' }}
+                              value={form.occurrences} onChange={e => set('occurrences', e.target.value)}
+                              min={1} max={365} />
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Scope selector — only shown when editing a recurring booking */}
+                {isEdit && isRecurring && (
+                  <div className="form-group" style={{ marginTop: '10px' }}>
+                    <label className="form-label">Apply changes to</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {[
+                        { value: 'all', label: 'All events in this series', icon: '🔁' },
+                        { value: 'this', label: 'This event only', icon: '📌' }
+                      ].map(opt => (
+                        <label key={opt.value} style={{
+                          display: 'flex', alignItems: 'center', gap: '10px',
+                          padding: '8px 12px', borderRadius: 'var(--radius)', cursor: 'pointer',
+                          border: `1px solid ${form.scope === opt.value ? 'var(--primary)' : 'var(--gray-200)'}`,
+                          background: form.scope === opt.value ? 'var(--primary-light)' : 'white',
+                          transition: 'all 0.15s'
+                        }}>
+                          <input type="radio" name="scope" value={opt.value}
+                            checked={form.scope === opt.value} onChange={e => set('scope', e.target.value)} />
+                          <span style={{ fontSize: '13px' }}>{opt.icon} {opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

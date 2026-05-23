@@ -169,13 +169,28 @@ export default function BookingCalendar({ rooms }) {
           businessHours={{ daysOfWeek: [1, 2, 3, 4, 5], startTime: '08:00', endTime: '18:00' }}
           dayHeaderContent={(args) => {
             const d = args.date;
-            const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
+            const isToday = d.toDateString() === new Date().toDateString();
+            const dayAbbr = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+            const dayNum = d.getDate();
             return (
-              <div style={{ padding: '4px 0', textAlign: 'center', lineHeight: 1.4 }}>
-                <span style={{ fontSize: '12px', color: 'var(--gray-500)', display: 'block' }}>{dayName}</span>
-                <strong style={{ fontSize: '14px', color: 'var(--gray-800)' }}>{month}/{day}</strong>
+              <div style={{ textAlign: 'center', padding: '10px 0 6px', userSelect: 'none' }}>
+                <div style={{
+                  fontSize: '11px', fontWeight: '500', letterSpacing: '0.8px',
+                  color: isToday ? '#1a73e8' : '#70757a',
+                  marginBottom: '5px'
+                }}>
+                  {dayAbbr}
+                </div>
+                <div style={{
+                  width: '34px', height: '34px', borderRadius: '50%',
+                  background: isToday ? '#1a73e8' : 'transparent',
+                  color: isToday ? 'white' : '#3c4043',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '18px', fontWeight: isToday ? '600' : '400',
+                  margin: '0 auto', transition: 'background 0.2s'
+                }}>
+                  {dayNum}
+                </div>
               </div>
             );
           }}
