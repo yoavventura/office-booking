@@ -221,8 +221,9 @@ a { text-decoration: none; color: inherit; }
 
 /* FullCalendar — Google Calendar-inspired styling */
 
-/* Hide redundant date title in Day view (date is already in the column header) */
-.fc-timeGridDay-view .fc-toolbar-title { display: none !important; }
+/* Hide redundant date title in Day and Week views (dates are already in column headers) */
+.fc-timeGridDay-view .fc-toolbar-title,
+.fc-timeGridWeek-view .fc-toolbar-title { display: none !important; }
 
 .fc .fc-toolbar-title {
   font-size: 20px !important;
