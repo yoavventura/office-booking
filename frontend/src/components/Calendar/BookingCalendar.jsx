@@ -117,15 +117,6 @@ export default function BookingCalendar({ rooms }) {
           ))}
         </div>
 
-        <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--gray-100)' }}>
-          <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--gray-700)', marginBottom: '8px' }}>Legend</div>
-          {rooms.map(r => (
-            <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: r.color, flexShrink: 0 }} />
-              <span style={{ fontSize: '11px', color: 'var(--gray-600)' }}>{r.name}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Calendar */}
@@ -178,7 +169,7 @@ export default function BookingCalendar({ rooms }) {
             }
           }}
           eventContent={renderEventContent}
-          nowIndicator
+          nowIndicator={false}
           businessHours={{ daysOfWeek: [1, 2, 3, 4, 5], startTime: '08:00', endTime: '18:00' }}
           dayHeaderContent={(args) => {
             const d = args.date;
