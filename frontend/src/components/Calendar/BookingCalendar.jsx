@@ -143,6 +143,10 @@ export default function BookingCalendar({ rooms }) {
             center: 'title',
             right: 'timeGridDay,timeGridWeek,dayGridMonth'
           }}
+          views={{
+            timeGridDay:  { headerToolbar: { left: 'newBooking prev,next today', center: '', right: 'timeGridDay,timeGridWeek,dayGridMonth' } },
+            timeGridWeek: { headerToolbar: { left: 'newBooking prev,next today', center: '', right: 'timeGridDay,timeGridWeek,dayGridMonth' } }
+          }}
           buttonText={{
             day: 'Day',
             week: 'Week',
