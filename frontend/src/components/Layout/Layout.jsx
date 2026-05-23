@@ -60,7 +60,7 @@ export default function Layout() {
 
           {hasRole('admin') && (
             <NavLink to="/admin" style={({ isActive }) => navItemStyle(isActive)}>
-              <span>⚙️</span> Administration
+              <span>⚙️</span> Room Management
             </NavLink>
           )}
         </nav>

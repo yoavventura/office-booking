@@ -21,8 +21,8 @@ export default function Dashboard() {
   );
 
   return (
-    <div style={{ height: 'calc(100vh - 108px)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 108px)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexShrink: 0 }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--gray-900)' }}>Room Calendar</h1>
           <p style={{ color: 'var(--gray-500)', fontSize: '13px', marginTop: '2px' }}>
@@ -39,7 +39,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <BookingCalendar rooms={rooms} />
+      {/* Calendar fills remaining space and scrolls internally */}
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <BookingCalendar rooms={rooms} />
+      </div>
     </div>
   );
 }

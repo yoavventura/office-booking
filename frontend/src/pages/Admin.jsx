@@ -10,7 +10,7 @@ export default function Admin() {
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--gray-900)' }}>Administration</h1>
+        <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--gray-900)' }}>Room Management</h1>
         <p style={{ color: 'var(--gray-500)', fontSize: '13px', marginTop: '2px' }}>Manage rooms and users</p>
       </div>
 

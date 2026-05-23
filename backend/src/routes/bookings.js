@@ -187,7 +187,6 @@ router.post('/', (req, res) => {
   const start = new Date(startTime);
   const end = new Date(endTime);
   if (start >= end) return res.status(400).json({ error: 'End time must be after start time' });
-  if (start < new Date()) return res.status(400).json({ error: 'Cannot book a time in the past' });
 
   const room = db.prepare('SELECT * FROM rooms WHERE id = ? AND is_active = 1').get(roomId);
   if (!room) return res.status(404).json({ error: 'Room not found' });

@@ -59,9 +59,11 @@ a { text-decoration: none; color: inherit; }
   padding: 8px 16px;
   border-radius: var(--radius);
   font-weight: 500;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  transform: translateZ(0);
 }
+.btn:active { transform: scale(0.97); }
 
 .btn-primary {
   background: var(--primary);
@@ -219,13 +221,34 @@ a { text-decoration: none; color: inherit; }
 
 /* FullCalendar overrides */
 .fc .fc-toolbar-title { font-size: 18px !important; font-weight: 600 !important; }
-.fc .fc-button { background: white !important; color: var(--gray-700) !important; border: 1px solid var(--gray-200) !important; box-shadow: none !important; font-size: 13px !important; font-weight: 500 !important; }
-.fc .fc-button:hover { background: var(--gray-50) !important; }
+.fc .fc-button {
+  background: white !important;
+  color: var(--gray-700) !important;
+  border: 1px solid var(--gray-200) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.fc .fc-button:hover { background: var(--gray-50) !important; border-color: var(--gray-300) !important; }
+.fc .fc-button:active { transform: scale(0.97) !important; }
 .fc .fc-button-active { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 .fc .fc-button-primary:not(:disabled).fc-button-active { background: var(--primary) !important; border-color: var(--primary) !important; }
 .fc .fc-today-button { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 .fc-timegrid-slot { height: 40px !important; }
-.fc-event { cursor: pointer !important; border-radius: 4px !important; font-size: 12px !important; }
+.fc-event { cursor: pointer !important; border-radius: 4px !important; font-size: 12px !important; transition: opacity 0.15s ease, filter 0.15s ease !important; }
+.fc-event:hover { opacity: 0.92 !important; filter: brightness(1.05) !important; }
 .fc-daygrid-event { border-radius: 4px !important; }
-.fc .fc-col-header-cell-cushion { font-weight: 600; color: var(--gray-700); }
+.fc .fc-col-header-cell-cushion { padding: 4px 0 !important; }
 .fc .fc-timegrid-slot-label { font-size: 12px; color: var(--gray-400); }
+
+/* Fix: subtler time-slot selection highlight (fix 7) */
+.fc .fc-highlight {
+  background: rgba(37, 99, 235, 0.1) !important;
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Fix: calendar fills its container and scrolls internally (fix 2) */
+.fc { height: 100% !important; }
+.fc .fc-view-harness { overflow-y: auto !important; }
+.fc-scroller { overflow-y: auto !important; }

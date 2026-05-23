@@ -39,7 +39,7 @@ export default function BookingCalendar({ rooms }) {
         start: b.start_time,
         end: b.end_time,
         backgroundColor: b.room_color,
-        borderColor: b.room_color,
+        borderColor: 'white',
         textColor: 'white',
         extendedProps: { booking: b }
       }));
@@ -129,7 +129,7 @@ export default function BookingCalendar({ rooms }) {
       </div>
 
       {/* Calendar */}
-      <div className="card" style={{ flex: 1, padding: '16px', overflow: 'hidden' }}>
+      <div className="card" style={{ flex: 1, padding: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <FullCalendar
           ref={calendarRef}
           plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
@@ -137,7 +137,12 @@ export default function BookingCalendar({ rooms }) {
           headerToolbar={{
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'timeGridDay,timeGridWeek,dayGridMonth'
+          }}
+          buttonText={{
+            day: 'Day',
+            week: 'Week',
+            month: 'Month'
           }}
           events={fetchEvents}
           selectable
@@ -148,18 +153,32 @@ export default function BookingCalendar({ rooms }) {
           slotMinTime="07:00:00"
           slotMaxTime="22:00:00"
           slotDuration="00:30:00"
-          height="auto"
+          height="100%"
+          contentHeight="auto"
+          stickyHeaderDates
           select={handleDateSelect}
           eventClick={handleEventClick}
           eventDidMount={info => {
             const b = info.event.extendedProps.booking;
             if (b?.isRecurring) {
-              info.el.style.borderLeft = '4px solid rgba(255,255,255,0.5)';
+              info.el.style.borderLeft = '4px solid rgba(255,255,255,0.6)';
             }
           }}
           eventContent={renderEventContent}
           nowIndicator
           businessHours={{ daysOfWeek: [1, 2, 3, 4, 5], startTime: '08:00', endTime: '18:00' }}
+          dayHeaderContent={(args) => {
+            const d = args.date;
+            const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return (
+              <div style={{ padding: '4px 0', textAlign: 'center', lineHeight: 1.4 }}>
+                <span style={{ fontSize: '12px', color: 'var(--gray-500)', display: 'block' }}>{dayName}</span>
+                <strong style={{ fontSize: '14px', color: 'var(--gray-800)' }}>{month}/{day}</strong>
+              </div>
+            );
+          }}
         />
       </div>
 
