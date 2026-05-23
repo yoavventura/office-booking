@@ -53,6 +53,9 @@ function formatInstance(booking, start, end) {
     user_name: booking.user_name,
     room_name: booking.room_name,
     room_color: booking.room_color,
+    tag_id: booking.tag_id,
+    tag_name: booking.tag_name,
+    tag_color: booking.tag_color,
     title: booking.title,
     description: booking.description,
     start_time: start.toISOString(),
@@ -132,10 +135,12 @@ router.get('/', (req, res) => {
   const rangeEnd = end ? new Date(end) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
 
   let query = `
-    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name
+    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name,
+           t.name as tag_name, t.color as tag_color
     FROM bookings b
     JOIN rooms r ON b.room_id = r.id
     JOIN users u ON b.user_id = u.id
+    LEFT JOIN tags t ON b.tag_id = t.id
     WHERE b.parent_id IS NULL AND b.status != 'cancelled'
   `;
   const params = [];
@@ -164,8 +169,10 @@ router.get('/', (req, res) => {
 // GET /api/bookings/:id
 router.get('/:id', (req, res) => {
   const booking = getDb().prepare(`
-    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name, u.email as user_email
+    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name, u.email as user_email,
+           t.name as tag_name, t.color as tag_color
     FROM bookings b JOIN rooms r ON b.room_id = r.id JOIN users u ON b.user_id = u.id
+    LEFT JOIN tags t ON b.tag_id = t.id
     WHERE b.id = ?
   `).get(req.params.id);
 
@@ -178,7 +185,7 @@ router.get('/:id', (req, res) => {
 
 // POST /api/bookings — create booking
 router.post('/', (req, res) => {
-  const { roomId, title, description, startTime, endTime, recurrenceRule, recurrenceEnd } = req.body;
+  const { roomId, title, description, startTime, endTime, recurrenceRule, recurrenceEnd, tagId } = req.body;
   const db = getDb();
 
   if (!roomId || !title || !startTime || !endTime) {
@@ -202,14 +209,16 @@ router.post('/', (req, res) => {
   }
 
   const result = db.prepare(`
-    INSERT INTO bookings (room_id, user_id, title, description, start_time, end_time, recurrence_rule, recurrence_end)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO bookings (room_id, user_id, title, description, start_time, end_time, recurrence_rule, recurrence_end, tag_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(roomId, req.user.id, title, description || null, startTime, endTime,
-     recurrenceRule || null, recurrenceEnd || null);
+     recurrenceRule || null, recurrenceEnd || null, tagId || null);
 
   const booking = db.prepare(`
-    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name
+    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name,
+           t.name as tag_name, t.color as tag_color
     FROM bookings b JOIN rooms r ON b.room_id = r.id JOIN users u ON b.user_id = u.id
+    LEFT JOIN tags t ON b.tag_id = t.id
     WHERE b.id = ?
   `).get(result.lastInsertRowid);
 
@@ -242,7 +251,7 @@ router.put('/:id', (req, res) => {
     return res.status(403).json({ error: 'Access denied' });
   }
 
-  const { title, description, startTime, endTime, recurrenceRule, recurrenceEnd, scope } = req.body;
+  const { title, description, startTime, endTime, recurrenceRule, recurrenceEnd, scope, tagId } = req.body;
   const newStart = startTime || booking.start_time;
   const newEnd = endTime || booking.end_time;
 
@@ -264,7 +273,7 @@ router.put('/:id', (req, res) => {
 
   db.prepare(`
     UPDATE bookings SET title = ?, description = ?, start_time = ?, end_time = ?,
-    recurrence_rule = ?, recurrence_end = ?, updated_at = CURRENT_TIMESTAMP
+    recurrence_rule = ?, recurrence_end = ?, tag_id = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
   `).run(
     title ?? booking.title,
@@ -272,12 +281,15 @@ router.put('/:id', (req, res) => {
     newStart, newEnd,
     recurrenceRule !== undefined ? recurrenceRule : booking.recurrence_rule,
     recurrenceEnd !== undefined ? recurrenceEnd : booking.recurrence_end,
+    tagId !== undefined ? tagId : booking.tag_id,
     req.params.id
   );
 
   const updated = db.prepare(`
-    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name
+    SELECT b.*, r.name as room_name, r.color as room_color, u.name as user_name,
+           t.name as tag_name, t.color as tag_color
     FROM bookings b JOIN rooms r ON b.room_id = r.id JOIN users u ON b.user_id = u.id
+    LEFT JOIN tags t ON b.tag_id = t.id
     WHERE b.id = ?
   `).get(req.params.id);
 

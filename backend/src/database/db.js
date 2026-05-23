@@ -79,17 +79,21 @@ function initializeDatabase() {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      color TEXT NOT NULL DEFAULT '#6366f1',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_bookings_room_time ON bookings(room_id, start_time, end_time);
     CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
     CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
   `);
 
-  // Add outlook_event_id column if it doesn't exist yet (safe migration)
-  try {
-    db.exec('ALTER TABLE bookings ADD COLUMN outlook_event_id TEXT');
-  } catch {
-    // Column already exists — ignore
-  }
+  // Safe migrations — ignore if column already exists
+  try { db.exec('ALTER TABLE bookings ADD COLUMN outlook_event_id TEXT'); } catch {}
+  try { db.exec('ALTER TABLE bookings ADD COLUMN tag_id INTEGER REFERENCES tags(id)'); } catch {}
 
   seedInitialData(db);
   console.log('Database initialized at', DB_PATH);

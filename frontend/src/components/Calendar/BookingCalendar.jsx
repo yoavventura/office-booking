@@ -17,12 +17,18 @@ export default function BookingCalendar({ rooms }) {
   const [modal, setModal] = useState(null); // null | { mode: 'create'|'edit', data }
   const [selectedRooms, setSelectedRooms] = useState(new Set(rooms.map(r => r.id)));
   const [roomFilter, setRoomFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('all');
+  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [nextEventText, setNextEventText] = useState('');
 
   useEffect(() => {
     setSelectedRooms(new Set(rooms.map(r => r.id)));
   }, [rooms]);
+
+  useEffect(() => {
+    api.get('/tags').then(res => setTags(res.data)).catch(() => {});
+  }, []);
 
   const fetchNextEvent = useCallback(async () => {
     try {
@@ -69,9 +75,13 @@ export default function BookingCalendar({ rooms }) {
         params: { start: info.startStr, end: info.endStr }
       });
 
-      const filtered = roomFilter === 'all'
+      let filtered = roomFilter === 'all'
         ? res.data
         : res.data.filter(b => b.room_id === Number(roomFilter));
+
+      if (tagFilter !== 'all') {
+        filtered = filtered.filter(b => b.tag_id === Number(tagFilter));
+      }
 
       const events = filtered.map(b => ({
         id: b.instanceId || String(b.id),
@@ -88,7 +98,7 @@ export default function BookingCalendar({ rooms }) {
     } catch {
       failureCb();
     }
-  }, [roomFilter]);
+  }, [roomFilter, tagFilter]);
 
   function handleDateSelect(selectInfo) {
     if (!hasRole('staff')) return;
@@ -185,6 +195,28 @@ export default function BookingCalendar({ rooms }) {
             </label>
           ))}
         </div>
+
+        {/* Tag filter */}
+        {tags.length > 0 && (
+          <>
+            <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--gray-700)', margin: '14px 0 8px' }}>Tags</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '4px 0' }}>
+                <input type="radio" name="tagFilter" value="all" checked={tagFilter === 'all'} onChange={() => setTagFilter('all')} />
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>All Tags</span>
+              </label>
+              {tags.map(tag => (
+                <label key={tag.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '4px 0' }}>
+                  <input type="radio" name="tagFilter" value={tag.id} checked={tagFilter === String(tag.id)} onChange={() => setTagFilter(String(tag.id))} />
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: tag.color, flexShrink: 0 }} />
+                    {tag.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
 
       </div>
 
@@ -313,6 +345,7 @@ export default function BookingCalendar({ rooms }) {
       {modal && (
         <BookingModal
           rooms={rooms}
+          tags={tags}
           initialData={modal.data}
           onClose={() => setModal(null)}
           onSaved={handleSaved}

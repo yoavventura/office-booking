@@ -4,9 +4,12 @@ import api from '../utils/api';
 const ROOM_COLORS = ['#2563eb', '#16a34a', '#9333ea', '#d97706', '#dc2626', '#0891b2', '#db2777', '#65a30d'];
 const ROLES = ['staff', 'manager', 'secretary', 'admin'];
 
+const TAG_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#f97316', '#06b6d4', '#84cc16', '#ec4899', '#14b8a6'];
+
 const SECTIONS = [
   { key: 'rooms',   icon: '🏠', label: 'Rooms' },
   { key: 'users',   icon: '👥', label: 'Users' },
+  { key: 'tags',    icon: '🏷️', label: 'Tags' },
   { key: 'outlook', icon: '📧', label: 'Outlook' }
 ];
 
@@ -15,6 +18,7 @@ export default function Admin() {
   const refs = {
     rooms:   useRef(null),
     users:   useRef(null),
+    tags:    useRef(null),
     outlook: useRef(null)
   };
 
@@ -84,6 +88,13 @@ export default function Admin() {
             👥 Users
           </div>
           <UsersSection />
+        </section>
+
+        <section ref={refs.tags} data-section="tags">
+          <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--gray-800)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '2px solid var(--gray-100)' }}>
+            🏷️ Tags
+          </div>
+          <TagsSection />
         </section>
 
         <section ref={refs.outlook} data-section="outlook" style={{ paddingBottom: '40px' }}>
@@ -298,6 +309,118 @@ function UsersSection() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ─── Tags ────────────────────────────────────────────────────────────────────
+
+function TagsSection() {
+  const [tags, setTags] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editTag, setEditTag] = useState(null);
+  const [error, setError] = useState('');
+  const emptyForm = { name: '', color: TAG_COLORS[0] };
+  const [form, setForm] = useState(emptyForm);
+
+  function loadTags() { api.get('/tags').then(res => setTags(res.data)).catch(console.error); }
+  useEffect(() => { loadTags(); }, []);
+
+  function openAdd() { setForm(emptyForm); setEditTag(null); setShowForm(true); setError(''); }
+  function openEdit(tag) { setForm({ name: tag.name, color: tag.color }); setEditTag(tag); setShowForm(true); setError(''); }
+
+  async function handleSubmit(e) {
+    e.preventDefault(); setError('');
+    try {
+      if (editTag) await api.put(`/tags/${editTag.id}`, form);
+      else await api.post('/tags', form);
+      setShowForm(false); loadTags();
+    } catch (err) { setError(err.response?.data?.error || 'Failed to save'); }
+  }
+
+  async function handleDelete(tag) {
+    if (!confirm(`Delete tag "${tag.name}"?`)) return;
+    try { await api.delete(`/tags/${tag.id}`); loadTags(); }
+    catch (err) { alert(err.response?.data?.error || 'Failed to delete'); }
+  }
+
+  return (
+    <div>
+      <div style={{ fontSize: '13px', color: 'var(--gray-500)', marginBottom: '16px' }}>
+        Tags are assigned to every booking and can be used to filter the calendar. Create tags that reflect your meeting types.
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ fontWeight: '600', color: 'var(--gray-700)' }}>{tags.length} tag{tags.length !== 1 ? 's' : ''}</div>
+        <button className="btn btn-primary" onClick={openAdd}>+ Add Tag</button>
+      </div>
+
+      {showForm && (
+        <div className="card" style={{ padding: '20px', marginBottom: '20px', border: '2px solid var(--primary-light)' }}>
+          <div style={{ fontWeight: '600', marginBottom: '16px' }}>{editTag ? 'Edit Tag' : 'New Tag'}</div>
+          {error && <div className="alert alert-danger" style={{ marginBottom: '12px' }}>{error}</div>}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="form-group">
+              <label className="form-label">Tag Name *</label>
+              <input className="form-input" required placeholder="e.g. Team Meeting, Client Call, 1:1"
+                value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Color</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {TAG_COLORS.map(c => (
+                  <button key={c} type="button" onClick={() => setForm(p => ({ ...p, color: c }))}
+                    style={{ width: '28px', height: '28px', borderRadius: '50%', background: c, border: form.color === c ? '3px solid var(--gray-800)' : '2px solid white', outline: form.color === c ? '2px solid var(--gray-400)' : 'none', cursor: 'pointer', flexShrink: 0 }} />
+                ))}
+                <span style={{ fontSize: '12px', color: 'var(--gray-400)', marginLeft: '4px' }}>
+                  {form.name && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', borderRadius: '999px', background: form.color + '22', color: form.color, fontWeight: '600', fontSize: '12px' }}>
+                    {form.name}
+                  </span>}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', borderTop: '1px solid var(--gray-100)', paddingTop: '12px' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editTag ? 'Save Changes' : 'Create Tag'}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {tags.length === 0 && !showForm ? (
+        <div className="card" style={{ padding: '32px', textAlign: 'center', color: 'var(--gray-400)' }}>
+          No tags yet — add your first one above
+        </div>
+      ) : (
+        <div className="card">
+          <table className="table">
+            <thead><tr><th>Tag</th><th>Color</th><th></th></tr></thead>
+            <tbody>
+              {tags.map(tag => (
+                <tr key={tag.id}>
+                  <td>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 12px', borderRadius: '999px', background: tag.color + '22', color: tag.color, fontWeight: '600', fontSize: '12px' }}>
+                      {tag.name}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: tag.color, flexShrink: 0 }} />
+                      <span style={{ fontSize: '12px', color: 'var(--gray-500)', fontFamily: 'monospace' }}>{tag.color}</span>
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(tag)}>Edit</button>
+                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(tag)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

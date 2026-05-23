@@ -41,13 +41,14 @@ function buildRRule(frequency, weekdays, endType, endDate, occurrences) {
   return `RRULE:${parts.join(';')}`;
 }
 
-export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
+export default function BookingModal({ onClose, onSaved, initialData, rooms, tags = [] }) {
   const { user, hasRole } = useAuth();
   const isEdit = !!initialData?.id;
   const existingRRule = parseRRule(initialData?.recurrence_rule);
 
   const [form, setForm] = useState({
     roomId: initialData?.room_id || rooms[0]?.id || '',
+    tagId: initialData?.tag_id || '',
     title: initialData?.title || '',
     description: initialData?.description || '',
     startTime: initialData?.start_time
@@ -87,6 +88,7 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
     const rrule = buildRRule(form.frequency, form.weekdays, form.endType, form.endDate, form.occurrences);
     const payload = {
       roomId: Number(form.roomId),
+      tagId: form.tagId ? Number(form.tagId) : null,
       title: form.title,
       description: form.description,
       startTime: new Date(form.startTime).toISOString(),
@@ -157,6 +159,27 @@ export default function BookingModal({ onClose, onSaved, initialData, rooms }) {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Tag *</label>
+              <select
+                className="form-input"
+                value={form.tagId}
+                onChange={e => set('tagId', e.target.value)}
+                required
+                disabled={!canEdit}
+              >
+                <option value="">— Select a tag —</option>
+                {tags.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              {tags.length === 0 && (
+                <div style={{ fontSize: '12px', color: 'var(--warning)', marginTop: '4px' }}>
+                  No tags exist yet — an admin must create some in Administration → Tags.
+                </div>
+              )}
             </div>
 
             <div className="form-group">
