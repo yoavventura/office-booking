@@ -270,11 +270,11 @@ a { text-decoration: none; color: inherit; }
   border-color: #1557b0 !important;
 }
 
-/* Grid lines — subtle like Google Calendar */
-.fc-theme-standard td, .fc-theme-standard th { border-color: #e0e0e0 !important; }
-.fc-theme-standard .fc-scrollgrid { border-color: #e0e0e0 !important; }
+/* Grid lines */
+.fc-theme-standard td, .fc-theme-standard th { border-color: #c0c4cc !important; }
+.fc-theme-standard .fc-scrollgrid { border-color: #c0c4cc !important; }
 .fc .fc-timegrid-slot { height: 44px !important; border-bottom: none !important; }
-.fc .fc-timegrid-slot-minor { border-top-style: dotted !important; border-color: #f1f3f4 !important; }
+.fc .fc-timegrid-slot-minor { border-top-style: dotted !important; border-color: #d4d7dc !important; }
 
 /* Time labels */
 .fc .fc-timegrid-slot-label {
