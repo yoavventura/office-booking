@@ -212,13 +212,13 @@ export default function BookingCalendar({ rooms }) {
 function renderEventContent(eventInfo) {
   const booking = eventInfo.event.extendedProps.booking;
   return (
-    <div style={{ padding: '2px 4px', overflow: 'hidden' }}>
-      <div style={{ fontWeight: '600', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+    <div style={{ padding: '3px 6px', overflow: 'hidden' }}>
+      <div style={{ fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', lineHeight: 1.3 }}>
         {booking?.isRecurring && <span title="Recurring">↻</span>}
         {eventInfo.event.title}
       </div>
       {booking?.room_name && (
-        <div style={{ fontSize: '10px', opacity: 0.85 }}>{booking.room_name}</div>
+        <div style={{ fontSize: '12px', opacity: 0.88, marginTop: '1px' }}>{booking.room_name}</div>
       )}
     </div>
   );

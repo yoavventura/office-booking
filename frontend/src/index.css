@@ -275,7 +275,7 @@ a { text-decoration: none; color: inherit; }
 .fc .fc-day-today .fc-daygrid-day-number { color: #1a73e8 !important; }
 
 /* Events */
-.fc-event { cursor: pointer !important; border-radius: 4px !important; font-size: 12px !important; transition: filter 0.12s ease, box-shadow 0.12s ease !important; border-width: 0 !important; padding: 1px 4px !important; }
+.fc-event { cursor: pointer !important; border-radius: 4px !important; font-size: 13px !important; transition: filter 0.12s ease, box-shadow 0.12s ease !important; border-width: 0 !important; padding: 1px 4px !important; }
 .fc-event:hover { filter: brightness(0.94) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important; }
 .fc-daygrid-event { border-radius: 4px !important; padding: 2px 6px !important; }
 
