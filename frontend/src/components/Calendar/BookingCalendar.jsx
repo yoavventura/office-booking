@@ -134,8 +134,21 @@ export default function BookingCalendar({ rooms }) {
           ref={calendarRef}
           plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
+          customButtons={{
+            newBooking: {
+              text: '+ New Booking',
+              click: () => {
+                const now = new Date();
+                const start = new Date(now);
+                start.setMinutes(0, 0, 0);
+                start.setHours(start.getHours() + 1);
+                const end = new Date(start.getTime() + 60 * 60 * 1000);
+                setModal({ mode: 'create', data: { start_time: start.toISOString(), end_time: end.toISOString() } });
+              }
+            }
+          }}
           headerToolbar={{
-            left: 'prev,next today',
+            left: 'newBooking prev,next today',
             center: 'title',
             right: 'timeGridDay,timeGridWeek,dayGridMonth'
           }}

@@ -248,6 +248,22 @@ a { text-decoration: none; color: inherit; }
 }
 .fc .fc-today-button:hover { background: #f6f8ff !important; }
 
+/* New Booking button — stands out in the toolbar */
+.fc .fc-newBooking-button {
+  background: #1a73e8 !important;
+  color: white !important;
+  border-color: #1a73e8 !important;
+  font-weight: 600 !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  margin-right: 8px !important;
+  letter-spacing: 0.2px !important;
+}
+.fc .fc-newBooking-button:hover {
+  background: #1557b0 !important;
+  border-color: #1557b0 !important;
+}
+
 /* Grid lines — subtle like Google Calendar */
 .fc-theme-standard td, .fc-theme-standard th { border-color: #e0e0e0 !important; }
 .fc-theme-standard .fc-scrollgrid { border-color: #e0e0e0 !important; }
