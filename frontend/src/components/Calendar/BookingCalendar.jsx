@@ -37,21 +37,25 @@ export default function BookingCalendar({ rooms }) {
           .filter(b => new Date(b.start_time) > now)
           .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
 
+        let text;
         if (upcoming.length === 0) {
-          setNextEventText('All clear — nothing scheduled');
-          return;
+          text = 'All clear — nothing scheduled';
+        } else {
+          const next = upcoming[0];
+          const start = new Date(next.start_time);
+          const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+          const isToday    = start.toDateString() === now.toDateString();
+          const isTomorrow = start.toDateString() === tomorrow.toDateString();
+          const dayStr = isToday ? 'Today' : isTomorrow ? 'Tomorrow'
+            : start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          text = `Next: ${next.title}  ·  ${next.room_name}  ·  ${dayStr} ${timeStr}`;
         }
 
-        const next = upcoming[0];
-        const start = new Date(next.start_time);
-        const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
-        const isToday    = start.toDateString() === now.toDateString();
-        const isTomorrow = start.toDateString() === tomorrow.toDateString();
-        const dayStr = isToday ? 'Today' : isTomorrow ? 'Tomorrow'
-          : start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        const timeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
-        setNextEventText(`Next: ${next.title}  ·  ${next.room_name}  ·  ${dayStr} ${timeStr}`);
+        setNextEventText(text);
+        // FullCalendar doesn't re-render custom button text on prop change — update DOM directly
+        const btn = document.querySelector('.fc-upcomingEvent-button');
+        if (btn) btn.textContent = text;
       } catch {
         setNextEventText('');
       }
@@ -109,8 +113,10 @@ export default function BookingCalendar({ rooms }) {
     setModal(null);
     calendarRef.current?.getApi().refetchEvents();
     refreshNotifications();
-    // Re-fetch next event so the toolbar updates immediately
+    // Trigger a re-fetch of the next event
     setNextEventText('...');
+    const btn = document.querySelector('.fc-upcomingEvent-button');
+    if (btn) btn.textContent = '...';
   }
 
   function toggleRoom(roomId) {
