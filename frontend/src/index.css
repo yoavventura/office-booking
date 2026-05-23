@@ -297,9 +297,21 @@ a { text-decoration: none; color: inherit; }
 .fc .fc-day-today .fc-daygrid-day-number { color: #1a73e8 !important; }
 
 /* Events */
-.fc-event { cursor: pointer !important; border-radius: 4px !important; font-size: 13px !important; transition: filter 0.12s ease, box-shadow 0.12s ease !important; border-width: 0 !important; padding: 1px 4px !important; }
+.fc-event { cursor: grab !important; border-radius: 4px !important; font-size: 13px !important; transition: filter 0.12s ease, box-shadow 0.12s ease !important; border-width: 0 !important; padding: 1px 4px !important; }
 .fc-event:hover { filter: brightness(0.94) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important; }
 .fc-daygrid-event { border-radius: 4px !important; padding: 2px 6px !important; }
+
+/* Drag lift effect — picked up shadow */
+.fc-event-dragging {
+  cursor: grabbing !important;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.28), 0 8px 16px rgba(0,0,0,0.18) !important;
+  transform: scale(1.03) !important;
+  opacity: 0.96 !important;
+  filter: brightness(1.04) !important;
+  z-index: 999 !important;
+  transition: box-shadow 0.15s ease, transform 0.15s ease !important;
+  border-radius: 6px !important;
+}
 
 /* Business hours — almost invisible like Google Calendar */
 .fc .fc-non-business { background: rgba(248,249,250,0.6) !important; }

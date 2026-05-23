@@ -114,6 +114,34 @@ export default function BookingCalendar({ rooms }) {
     fetchNextEvent();
   }
 
+  async function handleEventDrop({ event, revert }) {
+    const booking = event.extendedProps.booking;
+    try {
+      await api.put(`/bookings/${booking.id}`, {
+        startTime: event.start.toISOString(),
+        endTime: event.end.toISOString(),
+      });
+      refreshNotifications();
+      fetchNextEvent();
+    } catch {
+      revert(); // snap back if the server rejects it (e.g. conflict)
+    }
+  }
+
+  async function handleEventResize({ event, revert }) {
+    const booking = event.extendedProps.booking;
+    try {
+      await api.put(`/bookings/${booking.id}`, {
+        startTime: event.start.toISOString(),
+        endTime: event.end.toISOString(),
+      });
+      refreshNotifications();
+      fetchNextEvent();
+    } catch {
+      revert();
+    }
+  }
+
   function toggleRoom(roomId) {
     setSelectedRooms(prev => {
       const next = new Set(prev);
@@ -207,6 +235,7 @@ export default function BookingCalendar({ rooms }) {
             month: 'Month'
           }}
           events={fetchEvents}
+          editable
           selectable
           selectMirror
           dayMaxEvents
@@ -220,6 +249,8 @@ export default function BookingCalendar({ rooms }) {
           stickyHeaderDates
           select={handleDateSelect}
           eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
           eventDidMount={info => {
             const b = info.event.extendedProps.booking;
             if (b?.isRecurring) {
