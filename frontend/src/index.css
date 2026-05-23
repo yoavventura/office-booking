@@ -253,23 +253,6 @@ a { text-decoration: none; color: inherit; }
 }
 .fc .fc-today-button:hover { background: #f6f8ff !important; }
 
-/* Upcoming event display — styled as text, not a button */
-.fc .fc-upcomingEvent-button {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  color: var(--gray-500) !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  pointer-events: none !important;
-  cursor: default !important;
-  padding: 6px 12px !important;
-  letter-spacing: 0.1px !important;
-}
-.fc .fc-upcomingEvent-button:hover {
-  background: transparent !important;
-  border: none !important;
-}
 
 /* New Booking button — stands out in the toolbar */
 .fc .fc-newBooking-button {

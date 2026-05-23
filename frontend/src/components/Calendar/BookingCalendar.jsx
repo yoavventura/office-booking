@@ -162,6 +162,20 @@ export default function BookingCalendar({ rooms }) {
 
       {/* Calendar */}
       <div className="card" style={{ flex: 1, padding: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        {/* Next event overlay — sits in the toolbar center, pure React so always up to date */}
+        <div style={{ position: 'relative' }}>
+          {nextEventText && (
+            <div style={{
+              position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+              height: '44px', display: 'flex', alignItems: 'center',
+              zIndex: 5, pointerEvents: 'none',
+              fontSize: '13px', fontWeight: '500', color: 'var(--gray-500)',
+              whiteSpace: 'nowrap'
+            }}>
+              {nextEventText}
+            </div>
+          )}
+        </div>
         <FullCalendar
           ref={calendarRef}
           plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin]}
@@ -177,15 +191,11 @@ export default function BookingCalendar({ rooms }) {
                 const end = new Date(start.getTime() + 60 * 60 * 1000);
                 setModal({ mode: 'create', data: { start_time: start.toISOString(), end_time: end.toISOString() } });
               }
-            },
-            upcomingEvent: {
-              text: nextEventText,
-              click: () => {}
             }
           }}
           headerToolbar={{
             left: 'newBooking prev,next today',
-            center: 'upcomingEvent',
+            center: '',
             right: 'timeGridDay,timeGridWeek,dayGridMonth'
           }}
           views={{
