@@ -174,12 +174,32 @@ export default function BookingCalendar({ rooms }) {
           dayHeaderContent={(args) => {
             const d = args.date;
             const isToday = d.toDateString() === new Date().toDateString();
+            const isDayView = args.view.type === 'timeGridDay';
+
+            if (isDayView) {
+              // Simple style for Day view
+              const dayName = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+              const mm = String(d.getMonth() + 1).padStart(2, '0');
+              const dd = String(d.getDate()).padStart(2, '0');
+              return (
+                <div style={{ padding: '6px 0', textAlign: 'center', userSelect: 'none' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: isToday ? '#1a73e8' : 'var(--gray-500)', display: 'block', letterSpacing: '0.5px' }}>
+                    {dayName}
+                  </span>
+                  <strong style={{ fontSize: '15px', fontWeight: '700', color: isToday ? '#1a73e8' : 'var(--gray-800)' }}>
+                    {mm}/{dd}
+                  </strong>
+                </div>
+              );
+            }
+
+            // Google Calendar circle style for Week and Month views
             const dayAbbr = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
             const dayNum = d.getDate();
             return (
               <div style={{ textAlign: 'center', padding: '10px 0 6px', userSelect: 'none' }}>
                 <div style={{
-                  fontSize: '11px', fontWeight: '500', letterSpacing: '0.8px',
+                  fontSize: '11px', fontWeight: '600', letterSpacing: '0.8px',
                   color: isToday ? '#1a73e8' : '#70757a',
                   marginBottom: '5px'
                 }}>
@@ -190,7 +210,7 @@ export default function BookingCalendar({ rooms }) {
                   background: isToday ? '#1a73e8' : 'transparent',
                   color: isToday ? 'white' : '#3c4043',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '18px', fontWeight: isToday ? '600' : '400',
+                  fontSize: '18px', fontWeight: isToday ? '700' : '500',
                   margin: '0 auto', transition: 'background 0.2s'
                 }}>
                   {dayNum}
@@ -217,12 +237,12 @@ function renderEventContent(eventInfo) {
   const booking = eventInfo.event.extendedProps.booking;
   return (
     <div style={{ padding: '3px 6px', overflow: 'hidden' }}>
-      <div style={{ fontWeight: '600', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', lineHeight: 1.3 }}>
+      <div style={{ fontWeight: '700', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', lineHeight: 1.3 }}>
         {booking?.isRecurring && <span title="Recurring">↻</span>}
         {eventInfo.event.title}
       </div>
       {booking?.room_name && (
-        <div style={{ fontSize: '12px', opacity: 0.88, marginTop: '1px' }}>{booking.room_name}</div>
+        <div style={{ fontSize: '12px', fontWeight: '500', opacity: 0.88, marginTop: '1px' }}>{booking.room_name}</div>
       )}
     </div>
   );
